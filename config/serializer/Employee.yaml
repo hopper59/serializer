@@ -1,0 +1,8 @@
+App\Entity\Employee:
+  attributes:
+    firstName:
+      groups: []
+    lastName:
+      groups: []
+    shop:
+      groups: []

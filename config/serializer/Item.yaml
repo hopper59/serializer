@@ -1,0 +1,9 @@
+App\Entity\Item:
+  attributes:
+    name:
+      groups: ['all', 'basic']
+    price:
+      serialized_name: cost 
+      groups: ['all', 'basic']
+    groupedItem:
+      groups: ['all']

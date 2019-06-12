@@ -1,0 +1,10 @@
+App\Entity\Shop:
+  attributes:
+    name:
+      groups: []
+    address:
+      groups: []
+    employees:
+      groups: []
+    items:
+      groups: []

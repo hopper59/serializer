@@ -1,0 +1,88 @@
+# This file is the entry point to configure your own services.
+# Files in the packages/ subdirectory configure your dependencies.
+
+# Put parameters here that don't need to change on each machine where the app is deployed
+# https://symfony.com/doc/current/best_practices/configuration.html#application-related-configuration
+parameters:
+
+services:
+    # default configuration for services in *this* file
+    _defaults:
+        autowire: true      # Automatically injects dependencies in your services.
+        autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+
+    # makes classes in src/ available to be used as services
+    # this creates a service per class whose id is the fully-qualified class name
+    App\:
+        resource: '../src/*'
+        exclude: '../src/{DependencyInjection,Entity,Migrations,Tests,Kernel.php}'
+
+    # controllers are imported separately to make sure services can be injected
+    # as action arguments even if you don't extend any base controller class
+    #App\Controller\:
+    #    resource: '../src/Controller'
+    #    tags: ['controller.service_arguments']
+
+    # add more service definitions when explicit configuration is needed
+    # please note that last definitions always *replace* previous ones
+
+
+    # serializer setup
+    serializer.finder:
+        class: Symfony\Component\Finder\Finder
+
+    serializer.encoder.json:
+        class: Symfony\Component\Serializer\Encoder\JsonEncoder
+
+    serializer.encoder.xml:
+        class: Symfony\Component\Serializer\Encoder\XmlEncoder
+
+    serializer.yaml.chain:
+        class: App\Serializer\SerializerLoader
+        arguments:
+            - "%kernel.project_dir%/config/serializer"
+            - '@serializer.finder'
+
+    serializer.metadata_factory:
+        class: Symfony\Component\Serializer\Mapping\Factory\ClassMetadataFactory
+        arguments:
+            - '@serializer.yaml.chain'
+
+    # needed for serialized_name to work
+    serializer.normalizer.name_convertor:
+        class: Symfony\Component\Serializer\NameConverter\MetadataAwareNameConverter
+        arguments:
+            - '@serializer.metadata_factory'
+
+    serializer.normalizer.object:
+        class: Symfony\Component\Serializer\Normalizer\ObjectNormalizer
+        arguments:
+            - '@serializer.metadata_factory'
+            - '@serializer.normalizer.name_convertor'
+
+    serializer.normalizer.get_set:
+        class: Symfony\Component\Serializer\Normalizer\GetSetMethodNormalizer
+        arguments:
+            - '@serializer.metadata_factory'
+            - '@serializer.normalizer.name_convertor'
+              
+    serializer.normalizer.array_thing:
+        class: Symfony\Component\Serializer\Normalizer\ArrayDenormalizer
+
+    serializer.normalizer.item:
+        class: App\Normalizer\Item
+        arguments:
+            - '@serializer.normalizer.object'
+
+    # todo make own serizlier for circular refrenece fix
+    serializer.my.serializer:
+        class: Symfony\Component\Serializer\Serializer
+        arguments:
+          - [ '@serializer.normalizer.item', '@serializer.normalizer.get_set','@serializer.normalizer.object', '@serializer.normalizer.array_thing' ]
+          - [ '@serializer.encoder.xml', '@serializer.encoder.json' ]
+    
+    # servies
+    service.app.generator:
+        class: App\Service\Generator
+        arguments: 
+            - '@serializer.my.serializer'
